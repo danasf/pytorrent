@@ -3,7 +3,8 @@ import hashlib
 import bencode
 import socket
 from struct import *
-
+import select
+import sys 
 
 class Tracker(object):
 
@@ -35,7 +36,7 @@ class Tracker(object):
 				self.file_len +=file['length'] 
 		
 		
-		# iterate through until one matches http
+		# iterate through announce-list until one matches http
 
 		# otherwise use announce
 
@@ -109,10 +110,11 @@ class Message(object):
 		print self.data
 		if len(self.data) > 68:
 			ints = map(ord,self.data[69:])
+			byte = map(chr,ints)
 			print ints
 
 	def send(self,message):
-		pass
+		return "\x00\x00\x8e\x02"
 
 
 tor = Tracker()
@@ -127,13 +129,13 @@ for i,peer in enumerate(peers):
 	print peer[0], peer[1]
 	try:
 		s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+		#s.setblocking(0)
 		s.connect((peer[0],peer[1]))
 		s.send(hs_str)
 		msg = Message(s.recv(2048))
 		msg.parse()
-		#s.write()
+		s.send(msg.send("hi"))
+		#print map(chr,s.recv(2048))
 		s.close()
-		# if data is longer than 68 chars there's a message
-		#print "from peer:", data
 	except socket.error:
 		print socket.error
